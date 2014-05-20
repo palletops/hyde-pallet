@@ -1,4 +1,4 @@
-(ns hyde-pallet-crate.core
+(ns com.palletops.hyde-pallet.core
   (:require [palletops.hyde :as hyde]
             [clojure.walk :refer [postwalk]]
             [clojure.edn :as edn]
@@ -79,7 +79,7 @@
 
   (hyde/write-data!
    root "api-doc"
-   (clean-api (edn/read-string (slurp (file (resource "crate/docudata.clj"))))))
+   (clean-api (edn/read-string (slurp (file  "target/docudata.edn")))))
   (hyde/write-collection!
    "/tmp/site"
    "api"
