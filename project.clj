@@ -7,4 +7,5 @@
   :plugins [[lein-modules "0.3.1"]]
   :aliases {"install" ["modules" "install"]
             "deploy" ["modules" "deploy"]
-            "clean" ["modules" "clean"]})
+            "clean" ["modules" "clean"]}
+  :profiles {:travis {:module {:subprocess "lein2"}}})
