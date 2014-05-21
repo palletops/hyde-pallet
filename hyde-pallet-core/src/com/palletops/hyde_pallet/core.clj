@@ -84,29 +84,29 @@
   (hyde/write-data!
    root "api-doc"
    (clean-api (edn/read-string (slurp (file  "target/docudata.edn")))))
-  (hyde/write-collection!
-   root
-   "api"
-   {:index-key :my-index
-    :docs [{:path "doc-a.md"
-            :front-matter
-            {:title "doc a"
-             :layout "default"}
-            :content "this is doc *a*"}
-           {:path "doc-b.md"
-            :front-matter
-            {:title "doc b"
-             :layout "default"}
-            :content "this is verbatim *b* [* #pallet/project pallet *]"}]}
-   {'pallet/project #'->Project})
-  (hyde/write-document!
-   root
-   {:path "README.md"
-    :front-matter
-    {:title "lein-pallet-release"
-     :layout "doc"}
-    :content
-     "A Leiningen plugin to release PalletOps projects.
+  (binding [hyde/*tag-map* {'pallet/project #'->Project}]
+    (hyde/write-collection!
+     root
+     "api"
+     {:index-key :my-index
+      :docs [{:path "doc-a.md"
+              :front-matter
+              {:title "doc a"
+               :layout "default"}
+              :content "this is doc *a*"}
+             {:path "doc-b.md"
+              :front-matter
+              {:title "doc b"
+               :layout "default"}
+              :content "this is verbatim *b* [* #pallet/project pallet *]"}]})
+    (hyde/write-document!
+     root
+     {:path "README.md"
+      :front-matter
+      {:title "lein-pallet-release"
+       :layout "doc"}
+      :content
+      "A Leiningen plugin to release PalletOps projects.
 
 
 Releases are made by creating a local release branch which is pushed
@@ -244,5 +244,4 @@ You can specify the url and branch travis should push to on the
 Copyright © 2014 Hugo Duncan, Antoni Batchelli
 
 Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version."}
-    {'pallet/project #'->Project}))
+your option) any later version."})))
