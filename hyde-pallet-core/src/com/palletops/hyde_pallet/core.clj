@@ -58,6 +58,10 @@
                     (swapper :doc indent-md-headers)))]
     (postwalk clean api-doc)))
 
+(defrecord Project [project])
+(defmethod hyde/render Project [p]
+  (format "[%s](http://github.com/pallet/%s)" (:project p) (:project p)))
+
 (defn build-site [root jekyll-config site-config]
   (hyde/create-collections-dirs! root site-config)
   (hyde/write-gemfile! root jekyll-config)
@@ -81,7 +85,7 @@
    root "api-doc"
    (clean-api (edn/read-string (slurp (file  "target/docudata.edn")))))
   (hyde/write-collection!
-   "/tmp/site"
+   root
    "api"
    {:index-key :my-index
     :docs [{:path "doc-a.md"
@@ -93,7 +97,8 @@
             :front-matter
             {:title "doc b"
              :layout "default"}
-            :content "this is verbatim *b*"}]})
+            :content "this is verbatim *b* [* #pallet/project pallet *]"}]}
+   {'pallet/project #'->Project})
   (hyde/write-document!
    root
    {:path "README.md"
@@ -103,10 +108,11 @@
     :content
      "A Leiningen plugin to release PalletOps projects.
 
+
 Releases are made by creating a local release branch which is pushed
-to github.  The branch will be built by travis, and pushed to master
-and develop if it succeeds.  Jars are then built locally from master
-and pushed to clojars.
+to github. [* #pallet/project pallet *] The branch will be
+built by travis, and pushed to master and develop if it succeeds. Jars
+are then built locally from master and pushed to clojars.
 
 ## Usage
 
@@ -238,4 +244,5 @@ You can specify the url and branch travis should push to on the
 Copyright © 2014 Hugo Duncan, Antoni Batchelli
 
 Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version."}))
+your option) any later version."}
+    {'pallet/project #'->Project}))
