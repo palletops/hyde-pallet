@@ -62,6 +62,16 @@
 (defmethod hyde/render Project [p]
   (format "[%s](http://github.com/pallet/%s)" (:project p) (:project p)))
 
+(def api (clean-api (edn/read-string (slurp "target/docudata.edn"))))
+
+;; #dd/start test
+(defrecord Snippet [snippet])
+(defmethod hyde/render Snippet [s]
+  (let [snippets (:snippets api)
+        key (keyword (:snippet s))]
+    (:content (get snippets key))))
+;; #dd/end
+
 (defn build-site [root jekyll-config site-config]
   (hyde/create-collections-dirs! root site-config)
   (hyde/write-gemfile! root jekyll-config)
@@ -81,10 +91,9 @@
      {:title "API" :href "/api.html"}
      {:title "About" :href "/about"}]})
 
-  (hyde/write-data!
-   root "api-doc"
-   (clean-api (edn/read-string (slurp (file  "target/docudata.edn")))))
-  (binding [hyde/*tag-map* {'pallet/project #'->Project}]
+  (hyde/write-data! root "api-doc" api)
+  (binding [hyde/*tag-map* {'pallet/project #'->Project
+                            'hyde/snippet #'->Snippet}]
     (hyde/write-collection!
      root
      "api"
@@ -176,7 +185,13 @@ alsfkjafs;dlkfj
 lasjfda;slkdj
 ;lkjsdf;askjl
 
+### snippet
 
+this is some code snippet
+
+```clojure
+[* #hyde/snippet test*]
+```
 
 ### Configuration
 
