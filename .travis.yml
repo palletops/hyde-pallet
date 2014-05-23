@@ -9,4 +9,5 @@ after_success:
 - lein2 with-profile +travis pallet-release push
 env:
   global:
-    secure: ZHfmH6t0haUisZGfL1yL7dYCbf/LImgQi+pZxzuC+U/tSaUSaYawqOfgjZJX6YxdCpGxKc4lzKlmeJ/cdXXA8tqQTybFqNVHZs9fDgxMfzu9kwitQA/Wz97UBwYrS9rb8UG6u5GTgpVJnKfjQolExH5wwAlfFmG1qTLmpD7qb7o=
+    - secure: ZHfmH6t0haUisZGfL1yL7dYCbf/LImgQi+pZxzuC+U/tSaUSaYawqOfgjZJX6YxdCpGxKc4lzKlmeJ/cdXXA8tqQTybFqNVHZs9fDgxMfzu9kwitQA/Wz97UBwYrS9rb8UG6u5GTgpVJnKfjQolExH5wwAlfFmG1qTLmpD7qb7o=
+    - LEIN_CMD=lein2
