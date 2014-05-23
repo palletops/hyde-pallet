@@ -3,7 +3,8 @@
             [clojure.walk :refer [postwalk]]
             [clojure.edn :as edn]
             [clojure.java.io :refer [resource file as-file]]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [com.palletops.docudata.extract :as docudata]))
 
 (def jekyll-config
   {:gems
@@ -62,7 +63,7 @@
 (defmethod hyde/render Project [p]
   (format "[%s](http://github.com/pallet/%s)" (:project p) (:project p)))
 
-(def api (clean-api (edn/read-string (slurp "target/docudata.edn"))))
+(def ^:dynamic *api* {})
 
 ;; #dd/start test
 (defrecord Snippet [snippet])
@@ -78,10 +79,10 @@
   (hyde/write-config! root site-config)
   (hyde/copy-resources! root site-config)
   (hyde/write-document! root {:path "_posts/2012-01-01-my-example.md"
-                         :content "this is a *test*!"
-                         :front-matter
-                         {:title "This is the document"
-                          :index 1}})
+                              :content "this is a *test*!"
+                              :front-matter
+                              {:title "This is the document"
+                               :index 1}})
   (hyde/write-data!
    root "topbar-menu"
    {:brand "Sample Crate"
@@ -91,9 +92,15 @@
      {:title "API" :href "/api.html"}
      {:title "About" :href "/about"}]})
 
-  (hyde/write-data! root "api-doc" api)
   (binding [hyde/*tag-map* {'pallet/project #'->Project
-                            'hyde/snippet #'->Snippet}]
+                            'hyde/snippet #'->Snippet}
+            *api* (clean-api
+                  ;; TODO: the source paths should come from the project
+                  {:namespaces (doall (docudata/docudata ["src"] {}))
+                   :snippets (doall (docudata/snippets-in-path "."))}
+                  ;;(edn/read-string (slurp "target/docudata.edn"))
+                  )]
+    (hyde/write-data! root "api-doc" *api*)
     (hyde/write-collection!
      root
      "api"

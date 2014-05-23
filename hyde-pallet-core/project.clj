@@ -5,4 +5,5 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :plugins [[lein-modules "0.3.2"]]
   :dependencies [[org.clojure/clojure "1.6.0"]
+                 [com.palletops/docudata "0.1.1-SNAPSHOT"]
                  [com.palletops/hyde "0.1.1-SNAPSHOT"]])
