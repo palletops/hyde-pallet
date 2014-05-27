@@ -68,10 +68,74 @@
 ;; #dd/start test
 (defrecord Snippet [snippet])
 (defmethod hyde/render Snippet [s]
-  (let [snippets (:snippets api)
+  (let [snippets (:snippets *api*)
         key (keyword (:snippet s))]
     (:content (get snippets key))))
 ;; #dd/end
+
+(defn render-table [[headers rows]]
+  (str
+   "<table class='table'><thead><tr>\n"
+   (apply str (map #(format "<th>%s</th>\n" %) headers) )
+   "</tr></thead>\n"
+   "<tbody>\n"
+   (apply str
+          (map
+           #(format "<tr>%s</tr>\n"
+                    (apply str
+                           (map
+                            (fn [x]
+                              (str "<td>{% capture content %}"
+                                   x
+                                   "{% endcapture %}{{ content | markdownify }}</td>"))
+                            %)))
+           rows))
+   "</tbody></table>\n"))
+
+(defrecord Table [table])
+(defmethod hyde/render Table [t]
+  (render-table (:table t)))
+
+(defn get-api
+  ([api name]
+     (let [nss (map :vars (:namespaces api))
+           hits (mapcat (partial filter #(= name (:name %))) nss)
+           hitn (count hits)]
+       (cond
+        (> hitn 1) (throw
+                    (ex-info
+                     (format "The api name %s appears in more than one namespace: %s"
+                             name
+                             (map :ns hits))
+                     {}))
+        (= hitn 1) (first hits)
+        (= hitn 0) (throw
+                    (ex-info
+                     (format "the api name %s is not found" name)
+                     {}))))))
+
+(defrecord Api-Link [name])
+(defmethod hyde/render Api-Link [api]
+  (let [entry (get-api *api* (:name api))]
+    (format "[%s](/api.html#%s)" (:name api) (:name api))))
+
+(defrecord Api-Entry [name])
+(defmethod hyde/render Api-Entry [api]
+  (let [entry (get-api *api* (:name api))]
+    (str "<div class='bg-info'>"
+     (format "<code class='bg-info'>%s/%s: %s </code>"
+             (:ns entry)
+             (:name entry)
+             (with-out-str (clojure.pprint/pprint (:arglists entry))))
+     "<br>where:<br>"
+     (render-table [["Parameter" "Description"] [["api-doc" "Documentation on this api doc"]]])
+     "</div>")))
+
+(defn load-api []
+  (clean-api
+   ;; TODO: the source paths should come from the project
+   {:namespaces (doall (docudata/docudata ["src"] {}))
+    :snippets (doall (docudata/snippets-in-path "."))}))
 
 (defn build-site [root jekyll-config site-config]
   (hyde/create-collections-dirs! root site-config)
@@ -90,17 +154,15 @@
     [{:title "Home" :href "/"}
      {:title "Documentation" :href "/README.html"}
      {:title "API" :href "/api.html"}
-     {:title "About" :href "/about"}]})
+     {:title "Example" :href "/example.html"}]})
 
   (binding [hyde/*tag-map* {'pallet/project #'->Project
-                            'hyde/snippet #'->Snippet}
-            *api* (clean-api
-                  ;; TODO: the source paths should come from the project
-                  {:namespaces (doall (docudata/docudata ["src"] {}))
-                   :snippets (doall (docudata/snippets-in-path "."))}
-                  ;;(edn/read-string (slurp "target/docudata.edn"))
-                  )]
-    (hyde/write-data! root "api-doc" *api*)
+                            'hyde/snippet #'->Snippet
+                            'pallet/table #'->Table
+                            'pallet/api-link #'->Api-Link
+                            'pallet/api-entry #'->Api-Entry}
+            *api* (load-api)]
+    (hyde/write-data! root "api-doc" *api* {})
     (hyde/write-collection!
      root
      "api"
