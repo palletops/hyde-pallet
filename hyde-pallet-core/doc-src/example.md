@@ -36,9 +36,18 @@ example, to create this link to the function
 
 ### Summary for an api function
 
+The `#pallet/api-entry` tag adds the documentation for a function.
+The function can be anywhere in the source code. For example, to
+create a summary for the [* #pallet/api-link "clean-api" *] function
+you use:
+
+```
+\[\* #pallet/api-entry "clean-api" \*\]
+```
+
+which results in:
+
 [* #pallet/api-entry "clean-api" *]
-
-
 
 ## Usage
 
