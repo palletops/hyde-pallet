@@ -16,7 +16,7 @@ where `tag-name` has the format `<ns>/<name>` and `tag-expression` can
 be any EDN expression (read: clojure data structure). For example
 
 ```
-\[\* #pallet/api-entry "clean-api \*\]"
+\[\* #pallet/api-entry "clean-api" \*\]
 ```
 
 [tagged literals]: https://github.com/edn-format/edn#tagged-elements
@@ -31,7 +31,7 @@ example, to create this link to the function
 [* #pallet/api-link "clean-api" *] you use:
 
 ```
-\[\* #pallet/api-link "clean-api \*\]
+\[\* #pallet/api-link "clean-api" \*\]
 ```
 
 ### Summary for an api function
