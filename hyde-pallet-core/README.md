@@ -1,4 +1,4 @@
-# hyde-pallet-crate
+## This library
 
 A Clojure library designed to ... well, that part is up to you.
 
