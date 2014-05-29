@@ -55,6 +55,8 @@
                     (swapper :name str)
                     (swapper :var-type (comp str name))
                     (swapper :ns-name str)
+                    (swapper :tag (constantly "")) ;; currently killing it
+                    (swapper :sig clean-arglists)
                     (swapper :arglists clean-arglists)
                     (swapper :doc indent-md-headers)))]
     (postwalk clean api-doc)))
@@ -182,8 +184,19 @@
      {:path "README.md"
       :front-matter {:title "hyde-pallet" :layout "doc"}
       :content (slurp "README.md")})
-    (hyde/write-document!
+    #_(hyde/write-document!
      root
      {:path "example.md"
       :front-matter {:title "Example" :layout "doc"}
       :content (slurp "doc-src/example.md")})))
+
+#_(defn build-site [root jekyll-config site-config]
+;  (hyde/create-collections-dirs! root site-config)
+;  (hyde/write-gemfile! root jekyll-config)
+;  (hyde/write-config! root site-config)
+                                        ;  (hyde/copy-resources! root site-config)
+  (let [test (slurp "/tmp/test.edn")]
+    (println test)
+    (hyde/write-data! root "test" (clojure.edn/read-string test)))
+
+  )
