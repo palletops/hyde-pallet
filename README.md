@@ -1,10 +1,19 @@
 # hyde-pallet-crate
 
-A Clojure library designed to ... well, that part is up to you.
+Generate documentation sites for code projects.
 
 ## Usage
 
-FIXME
+There is some basic configuration possible in project.clj:
+
+  :hyde
+  {:title "maven crate"
+   :menu [{:title "Home" :href "/"}
+          {:title "Documentation" :href "/README.html"}
+          {:title "API" :href "/api.html"}]
+   :menu-extras [{:title "Example" :href "/example.html"}]
+   :data-files {"topbar-menu" {:brand "MAVEN CRATE"}}
+
 
 ## License
 
