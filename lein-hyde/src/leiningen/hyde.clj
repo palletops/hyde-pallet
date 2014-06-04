@@ -17,6 +17,10 @@
     :output-dir (.getPath (file (:target-path project) "hyde"))}
    (:hyde project)))
 
+(def project-keys
+  [:description :group :license :name :scm :source-paths :root :resouces
+   :url :version :hyde])
+
 (defn hyde
   "Generate documentation site for clojure code."
   [project & args]
@@ -26,14 +30,14 @@
         project (-> project
                     (add-profiles profiles)
                     (merge-profiles [::hyde]))
-        config (hyde-options project)]
+        config (hyde-options project)
+        sanitized-project (select-keys project project-keys)]
     (info "Creating hyde site in" (:output-dir config))
+    (clojure.pprint/pprint sanitized-project)
     (eval-in-project
      project
      `(com.palletops.hyde-pallet.core/build-site
        ~(:output-dir config)
-       (merge com.palletops.hyde-pallet.core/jekyll-config
-              '~(:jekyll config))
-       (merge com.palletops.hyde-pallet.core/site-config
-              '~(dissoc config :output-dir :jekyll)))
+       ~(name (:template config))
+       '~sanitized-project)
      `(require 'com.palletops.hyde-pallet.core))))
