@@ -33,19 +33,19 @@
                          (:hyde project))
         _ (printf "Final site config:\n----\n%s\n----\n"
                   (with-out-str (clojure.pprint/pprint site)))
-        {:keys [jekyll-config tag-map data-files documents site-config]} site]
+        {:keys [jekyll-config tag-map data-files documents site-config
+                context]} site]
     (hyde/create-collections-dirs! root site-config)
     (hyde/write-gemfile! root jekyll-config)
     (hyde/write-config! root site-config)
     (when project
       (hyde/write-data! root "lein" project))
     (binding [hyde/*tag-map* (merge tag-map tags/tags)
-              ;; TODO: this binding of *api* needs to be moved out to the template
-              api/*api* (api/load-api)]
-      (try (hyde/write-data! root "api-doc" api/*api* {})
+              hyde/*context* (merge hyde/*context* context)]
+      (try (hyde/write-data! root "api-doc" (api/api) {})
            (catch Exception e
              (println "Could not save api data:")
-             (clojure.pprint/pprint api/*api*)))
+             (clojure.pprint/pprint (api/api))))
       (hyde/copy-resources! root site-config)
       (doseq [[name data-map] data-files]
         (hyde/write-data! root name data-map))

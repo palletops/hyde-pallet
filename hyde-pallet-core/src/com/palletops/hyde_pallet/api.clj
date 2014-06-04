@@ -5,7 +5,6 @@
             [com.palletops.docudata.extract :as docudata]
             [clojure.walk :refer [postwalk]]))
 
-(def ^:dynamic *api* {})
 
 (defn clean-api [api-doc]
   (let [ ;; if `d` is a map, replace the value for key `k` with the
@@ -60,14 +59,21 @@
                      (format "the api name %s is not found" name)
                      {}))))))
 
+(defn api []
+  (if hyde/*context*
+    (:api hyde/*context*)
+    (do
+      (println "No API context set")
+      {})))
+
 (defrecord Api-Link [name])
 (defmethod hyde/render Api-Link [api]
-  (let [entry (get-api *api* (:name api))]
+  (let [entry (get-api (api) (:name api))]
     (format "[%s](/api.html#%s)" (:name api) (:name api))))
 
 (defrecord Api-Entry [name])
 (defmethod hyde/render Api-Entry [api]
-  (let [entry (get-api *api* (:name api))]
+  (let [entry (get-api (api) (:name api))]
     (str "<div class='bg-info'>"
      (format "<code class='bg-info'>%s/%s: %s </code>"
              (:ns entry)
@@ -80,7 +86,7 @@
 ;; #dd/start test
 (defrecord Snippet [snippet])
 (defmethod hyde/render Snippet [s]
-  (let [snippets (:snippets *api*)
+  (let [snippets (:snippets (api))
         key (keyword (:snippet s))]
     (:content (get snippets key))))
 ;; #dd/end

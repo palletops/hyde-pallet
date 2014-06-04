@@ -103,6 +103,8 @@
                     {:title "API" :href "/api.html"}])
                menu-extras)}}
      :tag-map (api/tags)
+     :context {:api (api-with-urls (api/load-api) project)
+               :project project}
      :documents
      (concat (docs-from-doc-src)
              [{:path "README.md"
