@@ -8,7 +8,7 @@ layout: doc
   {% for fn in ns.vars %}
 ###  {{ fn.name }} 
 {% if fn.doc %}{{ fn.doc }}{% endif %}
-[source](https://github.com/pallet/pallet/blob/master/src/{{ fn.file }}#L{{ fn.line}})
+[source]({{ fn.src-url }})
 
 {% for arglist in fn.arglists %}
   * {{ arglist | join:", " }}

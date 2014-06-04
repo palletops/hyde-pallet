@@ -88,6 +88,32 @@
                              front-matter)}))
          files)))
 
+(defn api-base-url [api project]
+  (let [project-scm-url (-> project :scm :url)
+        base-url (-> project :hyde :scm-base-url)]
+    (or base-url
+        project-scm-url
+        (do
+          (println "There is no base url for the API srouces")
+          nil))))
+
+(defn map-vals [m f]
+    (zipmap (keys m) (map f (vals m))))
+
+(defn api-with-urls [api project]
+  (let [base-url (api-base-url api project)
+        branch (or (-> project :hyde :branch) "master")
+        namespaces (:namespaces api)
+        var-with-url #(assoc % :src-url
+                             (format "%s/blob/%s/src/%s#L%s" base-url branch (:file %) (:line %)))
+        namespace-with-urls
+        #(let [vars (:vars %)]
+           (assoc %
+             :vars
+             (map  var-with-url vars)))]
+    (assoc api :namespaces
+           (map namespace-with-urls namespaces))))
+
 (defn site [{:keys [hyde] :as project}]
   (let [{:keys [title menu menu-extras]} (:hyde project)]
     (printf "hyde config:\n%s\n" (with-out-str (clojure.pprint/pprint (:hyde project))))
@@ -111,3 +137,15 @@
                :content (slurp "README.md")
                :front-matter {:title "hyde-pallet" :layout "doc"}}])}))
 
+(comment
+  ":hyde entry in projec.clj"
+  {:hyde
+   {:title "maven crate"
+    :scm-base-url "https://github.com/pallet/maven-crate"
+    :branch "feature/pallet-0.8"
+    :menu [{:title "Home" :href "/"}
+           {:title "Documentation" :href "/README.html"}
+           {:title "API" :href "/api.html"}]
+    :menu-extras [{:title "Example" :href "/example.html"}]
+    :data-files {"topbar-menu"
+                 {:brand "MAVEN CRATE"}}}})
