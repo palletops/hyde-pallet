@@ -2,7 +2,9 @@
   (:require [com.palletops.hyde-pallet.api :as api]
             [me.raynes.fs :as fs]
             [scout.core :as scout]
-            [clj-yaml.core :as yaml]))
+            [clj-yaml.core :as yaml]
+            [clojure.string :as string]
+            [carapace.shell :refer [sh-map]]))
 
 (def resources
   ["index.html"
@@ -50,7 +52,12 @@
      {:output true
       :layout "post"}}}})
 
-(defn fm [c]
+(defn fm
+  "Given a content with jekyll's front matter, it returns a map of
+  `#{:content :front-matter}` where `content` contains the content of
+  the file without the front matter, and `:front-matter` contains a
+  map with the parsed contents in the from-matter"
+  [c]
   (let [fm-begin (-> c
                      (scout/scanner)
                      (scout/scan-until #"(?m)^---\s*$"))
@@ -73,7 +80,10 @@
       {:content c
        :front-matter nil})))
 
-(defn docs-from-doc-src []
+(defn docs-from-doc-src
+  "builds the doc map from files in `doc-src` repo inside the
+  project's root dir"
+  []
   (let [files (fs/list-dir "doc-src")]
     (map (fn [f]
            (let [{:keys [content front-matter]} (fm (slurp (format "doc-src/%s" f)))]
@@ -88,7 +98,9 @@
                              front-matter)}))
          files)))
 
-(defn api-base-url [api project]
+(defn api-base-url
+  "Get's the base url for source files in the public web repo"
+  [api project]
   (let [project-scm-url (-> project :scm :url)
         base-url (-> project :hyde :scm-base-url)]
     (or base-url
@@ -97,10 +109,13 @@
           (println "There is no base url for the API srouces")
           nil))))
 
-(defn map-vals [m f]
-    (zipmap (keys m) (map f (vals m))))
-
-(defn api-with-urls [api project]
+(defn api-with-urls
+  "Update api var entries with source urls. It uses the project
+  information, specifically [:hyde :branch]
+  and [:hyde :scm-base-url]. `:branch` should be the current
+  repository's branch, and `:scm-base-url` should be the base url that
+  points at the project's file."
+  [api project]
   (let [base-url (api-base-url api project)
         branch (or (-> project :hyde :branch) "master")
         namespaces (:namespaces api)
@@ -114,22 +129,70 @@
     (assoc api :namespaces
            (map namespace-with-urls namespaces))))
 
-(defn site [{:keys [hyde] :as project}]
-  (let [{:keys [title menu menu-extras]} (:hyde project)]
-    (printf "hyde config:\n%s\n" (with-out-str (clojure.pprint/pprint (:hyde project))))
+(defn local-git-branch
+  "Get current git repo branch (via git binary run locally)"
+  []
+  (let [{:keys [out err exit]} (sh-map ["git" "rev-parse" "--abbrev-ref" "HEAD"] {})]
+    (if exit
+      (string/trim out)
+      (do
+        (printf "Cannot get local git branch: %s\n" err)
+        nil))))
+
+(defn local-git-origin
+  "Get the repo's origin url (via git binary run locally)"
+  []
+  (let [{:keys [out err exit]} (sh-map ["git" "config" "--get" "remote.origin.url"] {})]
+    (if exit
+      (string/trim out)
+      (do
+        (printf "Cannot get origin repo's url: %s\n" err)
+        nil))))
+
+(defn git-url->github-url
+  "Convert a git url into a github repository url"
+  [url]
+  (let [rx #"^(?:https?:\/\/|git:\/\/)?(?:[^@]+@)?(gist.github.com|github.com)[:\/]([^\/]+\/[^\/]+?|[0-9]+)$"
+        url (string/replace url ".git" "")
+        [_ host project] (re-find rx url)]
+    (format "https://%s/%s" host project)))
+
+(defn local-info
+  "Information obtained from local files"
+  []
+  (let [git-url (local-git-origin)
+        branch (local-git-branch)]
+    {:scm-base-url (git-url->github-url git-url)
+     :branch branch}))
+
+(defn site
+  "Builds the site map with information gathered from the project.
+
+  TODO: describe configuration options at the project level."
+  [project]
+  (let [hyde-config (merge (local-info) (:hyde project))
+        {:keys [title menu menu-extras scm-base-url branch]} hyde-config
+        ;; update the project with the local info
+        project (assoc project :hyde hyde-config)]
     {:jekyll-config jekyll-config
      :site-config site-config
      :data-files
      {"topbar-menu"
-      {:brand (or title "Crate")
+      {:brand (or title (:name project))
        :main-options
-       (concat (or menu
-                   [{:title "Home" :href "/"}
-                    {:title "Documentation" :href "/README.html"}
-                    {:title "API" :href "/api.html"}])
-               menu-extras)}}
+       (concat
+        ;; if a :menu entry is supplied, use it instead of the
+        ;; defaults
+        (or menu
+            [{:title "Home" :href "/"}
+             {:title "Documentation" :href "/README.html"}
+             {:title "API" :href "/api.html"}
+             {:title "GitHub" :href (format "%s/tree/%s" scm-base-url branch)}])
+        ;; add the menu extras to whatever is the menu
+        menu-extras)}}
      :tag-map (api/tags)
-     :context {:api (api-with-urls (api/load-api) project)
+     :context { ;; update api with urls to sources
+               :api (api-with-urls (api/load-api) project)
                :project project}
      :documents
      (concat (docs-from-doc-src)
