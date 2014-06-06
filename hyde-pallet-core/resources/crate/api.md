@@ -1,19 +1,39 @@
 ---
 layout: doc
 ---
+{% assign nss = site.data.api-doc.vars | group_by:"ns-name" %}
+{% assign sorted-nss = nss | sort:"name" %}
 
-{% for ns in site.data.api-doc.namespaces %}
-## {{ ns.ns-name}} 
-{% if ns.doc %}{{ ns.doc | markdownify}}{% endif %}
-  {% for fn in ns.vars %}
-###  {{ fn.name }} 
-{% if fn.doc %}{{ fn.doc }}{% endif %}
-[source]({{ fn.src-url }})
+{% for ns in sorted-nss %}
+## {{ ns.name }}
 
-{% for arglist in fn.arglists %}
-  * {{ arglist | join:", " }}
-{% endfor %} {% comment %} arglist {% endcomment %}
+{% assign sorted-items = ns.items | sort:"name" %}
+{% for var in sorted-items %}
 
-{% endfor %} {% comment %} fn {% endcomment %}
-{% endfor %} {% comment %} ns {% endcomment %}
+<h3 class="api-header" id="{{var.id}}">
+{{ var.name }} <span class="small">{{ var.var-type }}</span></h3>
+
+{: .api-header}
+{% if var.arglists-str %}
+Arguments:
+
+```clojure
+{{ var.arglists-str }}
+```
+{% endif %}
+{% if var.sig-str %}
+Signatures:
+
+```
+{{ var.sig-str }}
+```
+{% endif %}
+
+{% if var.doc %}{{ var.doc }}{% endif %}
+<a  href="{{ var.src-url }}">source</a>
+{% endfor %}
+{% endfor %}
+
+
+
 

@@ -4,7 +4,8 @@
             [scout.core :as scout]
             [clj-yaml.core :as yaml]
             [clojure.string :as string]
-            [carapace.shell :refer [sh-map]]))
+            [carapace.shell :refer [sh-map]]
+            [fipp.edn :refer [pprint]]))
 
 (def resources
   ["index.html"
@@ -109,6 +110,22 @@
           (println "There is no base url for the API srouces")
           nil))))
 
+(defn arglist-str [name arglists]
+  (let [calls (for [arglist arglists] (cons name arglist))]
+    (string/trim-newline
+     (apply str
+            (map #(with-out-str (pprint %)) calls)))))
+
+(defn sig-str [sig]
+  (string/trim-newline
+   (apply str
+          (map #(with-out-str (pprint %)) sig))))
+
+(defn safe-id [ns name]
+  (let [safe-ns (string/replace ns #"[^\w]" "-")
+        safe-name (string/replace name #"[^\w]" "-")]
+   (str safe-ns "_" safe-name)))
+
 (defn api-with-urls
   "Update api var entries with source urls. It uses the project
   information, specifically [:hyde :branch]
@@ -118,16 +135,24 @@
   [api project]
   (let [base-url (api-base-url api project)
         branch (or (-> project :hyde :branch) "master")
-        namespaces (:namespaces api)
-        var-with-url #(assoc % :src-url
-                             (format "%s/blob/%s/src/%s#L%s" base-url branch (:file %) (:line %)))
-        namespace-with-urls
-        #(let [vars (:vars %)]
-           (assoc %
-             :vars
-             (map  var-with-url vars)))]
-    (assoc api :namespaces
-           (map namespace-with-urls namespaces))))
+        var-with-url #(assoc %
+                        :src-url
+                        (format "%s/blob/%s/src/%s#L%s" base-url branch (:file %) (:line %))
+                        :arglists-str
+                        (when (:arglists %) (arglist-str (:name %) (:arglists %)))
+                        :sig-str
+                        (when (:sig %) (sig-str (:sig %)))
+                        :doc
+                        (when (:doc %)
+                          (string/replace
+                           (:doc %)
+                           #"(?s)#.*Function Signatures(.|$)*"
+                           ""))
+                        :id (safe-id (:ns %) (:name %)))
+        vars-with-urls (map var-with-url (:vars api))]
+    (assoc api :vars vars-with-urls)))
+
+
 
 (defn local-git-branch
   "Get current git repo branch (via git binary run locally)"

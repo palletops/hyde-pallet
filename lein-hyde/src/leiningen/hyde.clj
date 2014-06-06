@@ -38,6 +38,6 @@
      project
      `(com.palletops.hyde-pallet.core/build-site
        ~(:output-dir config)
-       ~(name (:template config))
+       ~(name (or (:template config) :crate))
        '~sanitized-project)
      `(require 'com.palletops.hyde-pallet.core))))

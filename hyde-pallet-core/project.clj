@@ -7,4 +7,5 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [com.palletops/docudata "0.1.1-SNAPSHOT"]
                  [com.palletops/hyde "0.1.1-SNAPSHOT"]
-                 [com.palletops/carapace "0.1.0-SNAPSHOT"]])
+                 [com.palletops/carapace "0.1.0-SNAPSHOT"]
+                 [fipp "0.4.2"]])

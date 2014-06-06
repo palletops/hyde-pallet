@@ -30,8 +30,8 @@
                            resolve
                            var-get)
         site (deep-merge (template-site project)
-                         (:hyde project))
-        _ (printf "Final site config:\n----\n%s\n----\n"
+                         #_(:hyde project))
+        _ _ #_(printf "Final site config:\n----\n%s\n----\n"
                   (with-out-str (clojure.pprint/pprint site)))
         {:keys [jekyll-config tag-map data-files documents site-config
                 context]} site]
@@ -42,7 +42,7 @@
       (hyde/write-data! root "lein" project))
     (binding [hyde/*tag-map* (merge tag-map tags/tags)
               hyde/*context* (merge hyde/*context* context)]
-      (try (hyde/write-data! root "api-doc" (api/api) {})
+      (try (hyde/write-data! root "api-doc" (api/clean-api (api/api)) {})
            (catch Exception e
              (println "Could not save api data:")
              (clojure.pprint/pprint (api/api))))

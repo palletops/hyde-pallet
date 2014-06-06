@@ -35,16 +35,16 @@
     (postwalk clean api-doc)))
 
 (defn load-api []
-  (clean-api
-   ;; TODO: the source paths should come from the project
-   {:namespaces (doall (docudata/docudata ["src"] {}))
-    :snippets (doall (docudata/snippets-in-path "."))}))
+  ;; TODO: the source paths should come from the project
+  {:namespaces (doall (docudata/namespaces ["src"] {}))
+   :vars (doall (docudata/vars ["src"] {}))
+   :snippets (doall (docudata/snippets-in-path "."))})
 
 
 (defn get-api
   ([api name]
-     (let [nss (map :vars (:namespaces api))
-           hits (mapcat (partial filter #(= name (:name %))) nss)
+     (let [vars (:vars api)
+           hits (filter #(= (symbol name) (:name %)) vars)
            hitn (count hits)]
        (cond
         (> hitn 1) (throw
@@ -67,13 +67,15 @@
       {})))
 
 (defrecord Api-Link [name])
-(defmethod hyde/render Api-Link [api]
-  (let [entry (get-api (api) (:name api))]
-    (format "[%s](/api.html#%s)" (:name api) (:name api))))
+(defmethod hyde/render Api-Link [n]
+  (println "n=" n)
+  ;;(println "*context*\n" (with-out-str (clojure.pprint/pprint hyde/*context*)))
+  (let [entry (get-api (api) (:name n))]
+    (format "[%s](/api.html#%s)" (:name n) (:name n))))
 
 (defrecord Api-Entry [name])
-(defmethod hyde/render Api-Entry [api]
-  (let [entry (get-api (api) (:name api))]
+(defmethod hyde/render Api-Entry [n]
+  (let [entry (get-api (api) (:name n))]
     (str "<div class='bg-info'>"
      (format "<code class='bg-info'>%s/%s: %s </code>"
              (:ns entry)

@@ -120,3 +120,16 @@ h2 {
 }
 
 */
+
+/****** customizations */
+.argslist pre {
+    background-color: #FFFFFF;
+    border:0px;
+}
+
+.api-header {
+    color: #333333;
+    font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+    
+    

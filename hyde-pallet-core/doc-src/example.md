@@ -125,17 +125,17 @@ You can specify the url and branch travis should push to on the
  `:pallet-release` key.
 
 ```clojure
-:pallet-release {:url \"Url for travis to push to\"
-                 :develop-branch \"develop\"
-                 :branch \"master\"}
+:pallet-release {:url "Url for travis to push to"
+                 :develop-branch "develop"
+                 :branch "master"}
 ```
 
 ## More clojure
 
 ```clojure
 (defn sub-file
-  \"Given a root path, it provides the path to a subdirectory defined
-  by the subs vector of directory names\"
+  "Given a root path, it provides the path to a subdirectory defined
+  by the subs vector of directory names"
   [root subs]
   (path/render-path
    (path/normalize*
@@ -148,29 +148,29 @@ You can specify the url and branch travis should push to on the
   {:sig [[s/Str Site-Config :- s/Bool]]}
   [root {:keys [config] :as site-config}]
   (let [content (yaml/generate-string config)
-        config-path (sub-file root [\"_config.yml\"])]
-    (println \"path is\" config-path)
-    (println \"content is\" content)
+        config-path (sub-file root ["_config.yml"])]
+    (println "path is" config-path)
+    (println "content is" content)
     (spit config-path content)
     true))
 
 (defn gemfile [config]
-  (stencil/render-file  \"Gemfile\" config))
+  (stencil/render-file  "Gemfile" config))
 
 (defn-api write-gemfile!
   {:sig [[s/Str Jekyll-Config :- s/Bool]]}
   [root config]
   (let [content (gemfile config)
-        path (sub-file root [\"Gemfile\"])]
+        path (sub-file root ["Gemfile"])]
     (spit path content)
     true))
 
 (defn-api create-collections-dirs!
   {:sig [[s/Str Site-Config :- s/Bool]]}
   [root {:keys [config]}]
-  (let [default-dirs [\"_posts\" \"_includes\" \"_layouts\" \"_data\"]
+  (let [default-dirs ["_posts" "_includes" "_layouts" "_data"]
         collections (-> config :collections keys)
-        collection-dirs (map #(str \"_\" (name %)) collections)
+        collection-dirs (map #(str "_" (name %)) collections)
         all-dirs (concat default-dirs collection-dirs)
         all-paths (map (partial sub-dir root) (map vector all-dirs))]
     (doseq [p all-paths] (println p))
