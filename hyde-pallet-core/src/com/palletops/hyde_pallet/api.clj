@@ -1,9 +1,9 @@
 (ns com.palletops.hyde-pallet.api
   (:require [clojure.string :as string]
-            [palletops.hyde :as hyde]
-            [com.palletops.hyde-pallet.tags :as tags]
+            [clojure.walk :refer [postwalk]]
             [com.palletops.docudata.extract :as docudata]
-            [clojure.walk :refer [postwalk]]))
+            [com.palletops.hyde-pallet.tags :as tags]
+            [palletops.hyde :as hyde]))
 
 
 (defn clean-api [api-doc]
@@ -42,22 +42,22 @@
 
 
 (defn get-api
-  ([api name]
-     (let [vars (:vars api)
-           hits (filter #(= (symbol name) (:name %)) vars)
-           hitn (count hits)]
-       (cond
-        (> hitn 1) (throw
-                    (ex-info
-                     (format "The api name %s appears in more than one namespace: %s"
-                             name
-                             (map :ns hits))
-                     {}))
-        (= hitn 1) (first hits)
-        (= hitn 0) (throw
-                    (ex-info
-                     (format "the api name %s is not found" name)
-                     {}))))))
+  [{:keys [vars] :as api} name]
+  (let [vars vars
+        hits (filter #(= (symbol name) (:name %)) vars)
+        hitn (count hits)]
+    (cond
+     (> hitn 1) (throw
+                 (ex-info
+                  (format "The api name %s appears in more than one namespace: %s"
+                          name
+                          (map :ns hits))
+                  {}))
+     (= hitn 1) (first hits)
+     (= hitn 0) (throw
+                 (ex-info
+                  (format "the api name %s is not found" name)
+                  {})))))
 
 (defn api []
   (if hyde/*context*
@@ -68,7 +68,7 @@
 
 (defrecord Api-Link [name])
 (defmethod hyde/render Api-Link [n]
-  (println "n=" n)
+  ;;(println "n=" n)
   ;;(println "*context*\n" (with-out-str (clojure.pprint/pprint hyde/*context*)))
   (let [entry (get-api (api) (:name n))]
     (format "[%s](/api.html#%s)" (:name n) (:name n))))

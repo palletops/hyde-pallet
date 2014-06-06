@@ -1,8 +1,8 @@
 ---
 layout: doc
-title: Public API
+title: Full API
 ---
-{% assign nss = site.data.api-doc.vars | group_by:"ns-name" %}
+{% assign nss = site.data.full-api-doc.vars | group_by:"ns-name" %}
 {% assign sorted-nss = nss | sort:"name" %}
 
 {% for ns in sorted-nss %}

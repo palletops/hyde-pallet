@@ -19,6 +19,7 @@
    "_layouts/page.html"
    "_layouts/doc.html"
    "api.md"
+   "full-api.md"
    "local.css"
    "toc.js"
    "coderay.css"])
@@ -128,31 +129,35 @@
 
 (defn api-with-urls
   "Update api var entries with source urls. It uses the project
-  information, specifically [:hyde :branch]
-  and [:hyde :scm-base-url]. `:branch` should be the current
+  information, specifically `[:hyde :branch]`
+  and `[:hyde :scm-base-url]`. `:branch` should be the current
   repository's branch, and `:scm-base-url` should be the base url that
   points at the project's file."
   [api project]
   (let [base-url (api-base-url api project)
         branch (or (-> project :hyde :branch) "master")
-        var-with-url #(assoc %
-                        :src-url
-                        (format "%s/blob/%s/src/%s#L%s" base-url branch (:file %) (:line %))
-                        :arglists-str
-                        (when (:arglists %) (arglist-str (:name %) (:arglists %)))
-                        :sig-str
-                        (when (:sig %) (sig-str (:sig %)))
-                        :doc
-                        (when (:doc %)
-                          (string/replace
-                           (:doc %)
-                           #"(?s)#.*Function Signatures(.|$)*"
-                           ""))
-                        :id (safe-id (:ns %) (:name %)))
+        var-with-url
+        #(let [{:keys [file line arglists name sig doc]} %]
+           (assoc %
+             :src-url (format "%s/blob/%s/src/%s#L%s" base-url branch file line )
+             :arglists-str (when arglists (arglist-str name arglists))
+             :sig-str (when sig (sig-str sig))
+             :doc (when doc (string/replace doc #"(?s)#.*Function Signatures(.|$)*" ""))
+             :id (safe-id (:ns %) (:name %))))
         vars-with-urls (map var-with-url (:vars api))]
     (assoc api :vars vars-with-urls)))
 
-
+(defn filter-api [{:keys [vars namespaces] :as api} ff]
+  (let [filtered-vars (filter ff vars)
+        filtered-namespaces (into #{} (map #(get % :ns-name) filtered-vars))
+        filtered-namespace-entries (filter #(filtered-namespaces (:ns-name %))
+                                           namespaces)]
+    (println "filtered vars=" filtered-vars)
+    (println "filtered ns=" filtered-namespaces)
+    (println "namespaces=" filtered-namespace-entries)
+    (assoc api
+      :vars filtered-vars
+      :namespaces filtered-namespace-entries)))
 
 (defn local-git-branch
   "Get current git repo branch (via git binary run locally)"
@@ -198,7 +203,11 @@
   (let [hyde-config (merge (local-info) (:hyde project))
         {:keys [title menu menu-extras scm-base-url branch]} hyde-config
         ;; update the project with the local info
-        project (assoc project :hyde hyde-config)]
+        project (assoc project :hyde hyde-config)
+        api (api-with-urls (api/load-api) project)
+        filtered-api (filter-api (api/clean-api api) :api)
+        full-api (api/clean-api api)
+        use-api-builder? (< 0 (count (:vars filtered-api)))]
     {:jekyll-config jekyll-config
      :site-config site-config
      :data-files
@@ -209,15 +218,27 @@
         ;; if a :menu entry is supplied, use it instead of the
         ;; defaults
         (or menu
-            [{:title "Home" :href "/"}
-             {:title "Documentation" :href "/README.html"}
-             {:title "API" :href "/api.html"}
-             {:title "GitHub" :href (format "%s/tree/%s" scm-base-url branch)}])
+            (let [add-public-api
+                  ;; only add public if (:vars filtered-api) is not empty
+                  #(if use-api-builder?
+                     (conj % {:title "Public API" :href "/api.html"})
+                     %)
+                  add-full-api
+                  #(conj % {:title (if use-api-builder? "Full API" "API")
+                         :href "/full-api.html"})]
+              (-> []
+                  (conj {:title "Home" :href "/"})
+                  (conj {:title "Documentation" :href "/README.html"})
+                  add-public-api
+                  add-full-api
+                  (conj {:title "GitHub" :href (format "%s/tree/%s" scm-base-url branch)}))))
         ;; add the menu extras to whatever is the menu
-        menu-extras)}}
+        menu-extras)}
+      "api-doc" filtered-api
+      "full-api-doc" full-api}
      :tag-map (api/tags)
      :context { ;; update api with urls to sources
-               :api (api-with-urls (api/load-api) project)
+               :api api
                :project project}
      :documents
      (concat (docs-from-doc-src)
@@ -232,7 +253,7 @@
     :scm-base-url "https://github.com/pallet/maven-crate"
     :branch "feature/pallet-0.8"
     :menu [{:title "Home" :href "/"}
-           {:title "Documentation" :href "/README.html"}
+full-api           {:title "Documentation" :href "/README.html"}
            {:title "API" :href "/api.html"}]
     :menu-extras [{:title "Example" :href "/example.html"}]
     :data-files {"topbar-menu"
