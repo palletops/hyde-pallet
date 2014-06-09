@@ -49,6 +49,19 @@ which results in:
 
 [* #pallet/api-entry "clean-api" *]
 
+### Running things at the repl
+
+`\[\* #pallet/repl {:run [(def a 10)(println "Hello" a)]} \*\]` results in:
+
+```
+[* #pallet/repl {:run [(def a 10)(println "Hello" a)]} *]
+```
+
+`\[\* #pallet/repl {:pre [(def a 10)] :run [(println "Hello" a)]} \*\]` results in:
+
+```
+[* #pallet/repl {:pre [(def a 10)] :run [(println "Hello" a)]} *]
+```
 ## Usage
 
 Add the plugin to your `:user` `:plugins` in `~/.lein/profiles.clj`:

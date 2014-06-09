@@ -1,5 +1,6 @@
 (ns palletops.hyde.site.crate
   (:require [com.palletops.hyde-pallet.api :as api]
+            [com.palletops.hyde-pallet.repl :as repl]
             [me.raynes.fs :as fs]
             [scout.core :as scout]
             [clj-yaml.core :as yaml]
@@ -236,7 +237,7 @@
         menu-extras)}
       "api-doc" filtered-api
       "full-api-doc" full-api}
-     :tag-map (api/tags)
+     :tag-map (merge (api/tags) (repl/tags))
      :context { ;; update api with urls to sources
                :api api
                :project project}
